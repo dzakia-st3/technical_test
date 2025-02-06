@@ -8,8 +8,9 @@ function App() {
 
   return (
     <>
-      <div className="min-h-screen bg-blue-200 flex justify-center items-center">
-        <h1 className="text-4xl font-bold text-white">Tailwind CSS is working!</h1>
+      <div className="min-h-screen bg-green-800 flex justify-center items-center text-green-400">
+      <p className="text-blue-600 dark:text-sky-400">The quick brown fox...</p>
+        <h1 className="text-wrap font-bold text-green-200">Tailwind CSS is working!</h1>
       </div>
 
       <div>
