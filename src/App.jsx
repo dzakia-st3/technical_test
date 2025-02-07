@@ -6,6 +6,8 @@ import Leaflet from "leaflet";
 
 function App() {
   const [location, setLocation] = useState(null);
+  const [infogeneral, setInfogeneral] = useState()
+  const [address, setAddress] = useState('')
 
   const carIcon = Leaflet.divIcon({
     html: `<span class="material-symbols-outlined text-black text-4xl">directions_car</span>`,
@@ -19,18 +21,44 @@ function App() {
     const fetchLocation = async () => {
       const response = await fetch('https://insight.kkp.go.id/api/index/get_data');
       const data = await response.json();
-      console.log(data.features[0].geometry.coordinates, 'data')
       const latestLocation = data.features[0].geometry.coordinates;
-      setLocation({
+      const newLocation = {
         lat: latestLocation[1],
         lon: latestLocation[0],
-      });
+      };
+      setLocation(newLocation)
+      setInfogeneral(data.features[0].properties)
+
+
+      // Reverse geocoding menggunakan Nominatim API
+      const reverseGeocode = async (lat, lon) => {
+        const url = `${import.meta.env.VITE_NOMINATIM_API}?lat=${lat}&lon=${lon}&format=json`;
+        const response = await fetch(url);
+        const data = await response.json();
+        const address = data.address ? data.address : 'Alamat tidak ditemukan';
+        setAddress(`${address.road}, ${address.city_block}, ${address.suburb}, ${address.neighbourhood}, ${address.city}`)
+      };
+
+      // Panggil reverse geocoding
+      reverseGeocode(newLocation.lat, newLocation.lon);
     };
 
     fetchLocation();
   }, []);
 
+  const dateString = infogeneral?.device_info?.subscription_expiry_date;
+  const date = new Date(dateString);
 
+  const formattedDate = date.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
 
   return (
     <React.Fragment>
@@ -38,14 +66,13 @@ function App() {
         <Navbar />
       </div>
       {/* content */}
-      <div className="md:flex gap-10 p-3">
+      <div className="md:flex md:justify-between p-3">
         {/* info */}
-        <div className="flex flex-col gap-5">
-          <div className="flex p-5 justify-between bg-white p-4 rounded-lg shadow-md">
+        <div className="flex flex-col gap-5 md:w-1/3">
+          <div className="flex p-5 justify-between items-center bg-white rounded-lg shadow-md">
             <div className="flex flex-col gap-3">
-              <div className="w-fit inline-flex items-center text-red-600 text-sm bg-red-100 rounded-lg px-2 py-1">
-                <span className="w-2 h-2 rounded-full bg-red-600 mr-2 inline-block"></span>
-                Offline | Unplug
+              <div className="w-fit inline-flex items-center text-red-600 mx-2 text-sm bg-red-100 rounded-lg px-2 py-1">
+                <span className="w-2 h-2 rounded-full bg-red-600 mr-2 inline-block"></span>Offline | Unplug
               </div>
               <div className="text-slate-500 text-base">Device ID</div>
               <div className="text-slate-500 text-base">Device Type</div>
@@ -55,18 +82,18 @@ function App() {
               <div className="text-slate-500 text-base">Subscription Expired Date</div>
             </div>
             <div className="flex flex-col gap-3 text-right">
-              <div className="text-emerald-600 text-base">98% ⚡</div>
-              <div className="text-slate-900 text-base">860896051280311</div>
-              <div className="text-slate-900 text-base">TELTONIKA</div>
-              <div className="text-emerald-600 text-base">Excellent</div>
-              <div className="text-orange-500 text-base">Ok</div>
-              <div className="text-slate-900 text-base">2030-04-04 10:09:32</div>
-              <div className="text-slate-900 text-base">Thu, 04 Apr 2030 17:09:32</div>
+              <div className="text-emerald-600 text-base">{infogeneral?.device_info?.battery} ⚡</div>
+              <div className="text-slate-900 text-base">{infogeneral?.device_info?.device_id}</div>
+              <div className="text-slate-900 text-base">{infogeneral?.device_info?.device_type.toUpperCase()}</div>
+              <div className="text-emerald-600 text-base">{infogeneral?.device_info?.signal_status?.replace(/^(\w)/, (match) => match.toUpperCase())}</div>
+              <div className="text-orange-500 text-base">{infogeneral?.device_info?.gnss_satelite?.replace(/^(\w)/, (match) => match.toUpperCase())}</div>
+              <div className="text-slate-900 text-base">{infogeneral?.device_info?.temperature}</div>
+              <div className="text-slate-900 text-base">{formattedDate}</div>
             </div>
           </div>
-          <div className="rounded-md p-5 bg-white rounded-lg shadow-md">
+          <div className="p-5 bg-white rounded-lg shadow-md">
             <div className="text-black text-base font-bold pb-3">Vehicle Information</div>
-            <span className="text-emerald-600 text-sm p-1 bg-emerald-100 rounded-lg mx-3">Safe Condition</span>
+            <span className="text-emerald-600 text-sm p-1 bg-emerald-100 rounded-lg mx-2">Safe Condition</span>
             <div className="flex pt-5 justify-between ">
               <div className="flex flex-col gap-3">
                 <div className="text-slate-500 text-base">Vehicle Type</div>
@@ -75,10 +102,10 @@ function App() {
                 <div className="text-slate-500 text-base">ODO Meter</div>
               </div>
               <div className="flex flex-col gap-3 text-right">
-                <div className="text-slate-900 text-base">SUV</div>
-                <div className="text-slate-900 text-base">0 Volt</div>
-                <div className="text-slate-900 text-base">Unavailable</div>
-                <div className="text-slate-900 text-base">60,023 KM</div>
+                <div className="text-slate-900 text-base">{infogeneral?.vehicle_information?.vehicle_type}</div>
+                <div className="text-slate-900 text-base">{infogeneral?.vehicle_information?.power_voltage}</div>
+                <div className="text-slate-900 text-base">{infogeneral?.vehicle_information?.fuel_indicator?.replace(/^(\w)/, (match) => match.toUpperCase())}</div>
+                <div className="text-slate-900 text-base">{infogeneral?.vehicle_information?.ODO_meter}</div>
               </div>
             </div>
           </div>
@@ -97,7 +124,7 @@ function App() {
               <div className="flex gap-3">
                 <span className="material-symbols-outlined text-slate-500">location_on</span>
                 <div className="text-black text-base font-bold">Location</div>
-                <div className="text-slate-500 text-base">Jalan Sisingamangaraja, RW 01, Selong, Kebayoran Baru, South Jakarta, Special capital Region of Jakarta</div>
+                <div className="text-slate-500 text-base">{address}</div>
               </div>
             </div>
             <div>
@@ -109,7 +136,7 @@ function App() {
                   <Marker position={[location.lat, location.lon]} icon={carIcon}>
                     <Popup>
                       <div className="text-left">
-                        <div className="font-bold pb-1">B 1212 DX</div>
+                        <div className="font-bold pb-1">{infogeneral.number_plate}</div>
                         <div className="text-gray-500 text-sm">Last seen: Mon, 11 Nov 2024 19:51:30</div>
                       </div>
                     </Popup>
