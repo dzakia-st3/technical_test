@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 export default function Navbar() {
     const [activeTab, setActiveTab] = useState('status');
@@ -41,8 +41,8 @@ export default function Navbar() {
                             key={tab}
                             onClick={() => setActiveTab(tab.toLowerCase())}
                             className={`px-2 py-2 text-sm rounded-md transition-colors outline-none ${activeTab === tab.toLowerCase()
-                                    ? "bg-blue-500 text-white outline outline-2 outline-blue-500"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                ? "bg-blue-500 text-white outline outline-2 outline-blue-500"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                 }`}
                         >
                             {tab}
