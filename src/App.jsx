@@ -18,6 +18,18 @@ function App() {
     popupAnchor: [0, -32]
   });
 
+  // Capitalize the First Letter
+  const capitalize = (text) => text ? text.replace(/^(\w)/, (match) => match.toUpperCase()) : '';
+
+  // Format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+
+    return `${date.toLocaleDateString('en-GB', options)}, ${date.toLocaleTimeString('en-GB', timeOptions)}`;
+  };
+
   useEffect(() => {
     const fetchLocation = async () => {
       const response = await fetch(`${import.meta.env.VITE_MAPS_API}`);
@@ -29,78 +41,31 @@ function App() {
       };
       setLocation(newLocation)
 
-      const dateString = data.features[0].properties.device_info.subscription_expiry_date;
-      const date = new Date(dateString);
+      const formattedDate = formatDate(data.features[0].properties.device_info.subscription_expiry_date);
 
-      const formattedDate = date.toLocaleString('en-GB', {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      })
-
-      let info = {
+      const info = {
         device_info: [
-          {
-            battery: data.features[0].properties.device_info.battery,
-          },
-          {
-            title: 'Device ID',
-            content: data.features[0].properties.device_info.device_id,
-          },
-          {
-            title: 'Device Type',
-            content: data.features[0].properties.device_info.device_type.toUpperCase(),
-          },
-          {
-            title: 'Signal Status',
-            content: data.features[0].properties.device_info.signal_status.replace(/^(\w)/, (match) => match.toUpperCase()),
-            color: 'text-emerald-600',
-          },
-          {
-            title: 'GNSS Satelite',
-            content: data.features[0].properties.device_info.gnss_satelite?.replace(/^(\w)/, (match) => match.toUpperCase()),
-            color: 'text-orange-500',
-          },
-          {
-            title: 'Temperature',
-            content: data.features[0].properties.device_info.temperature,
-          },
-          {
-            title: 'Subscription Expired Date',
-            content: formattedDate,
-          },
+          { battery: data.features[0].properties.device_info.battery },
+          { title: 'Device ID', content: data.features[0].properties.device_info.device_id },
+          { title: 'Device Type', content: data.features[0].properties.device_info.device_type.toUpperCase() },
+          { title: 'Signal Status', content: capitalize(data.features[0].properties.device_info.signal_status), color: 'text-emerald-600' },
+          { title: 'GNSS Satelite', content: capitalize(data.features[0].properties.device_info.gnss_satelite), color: 'text-orange-500' },
+          { title: 'Temperature', content: data.features[0].properties.device_info.temperature },
+          { title: 'Subscription Expired Date', content: formattedDate },
         ],
         vehicle_information: [
-          {
-            number_plate: data.features[0].properties.number_plate,
-          },
-          {
-            title: 'Vehicle Type',
-            content: data.features[0].properties.vehicle_information.vehicle_type,
-          },
-          {
-            title: 'Power Voltage',
-            content: data.features[0].properties.vehicle_information.power_voltage,
-          },
-          {
-            title: 'Fuel Indicator',
-            content: data.features[0].properties.vehicle_information.fuel_indicator?.replace(/^(\w)/, (match) => match.toUpperCase()),
-          },
-          {
-            title: 'ODO Meter',
-            content: data.features[0].properties.vehicle_information.ODO_meter,
-          },
+          { number_plate: data.features[0].properties.number_plate },
+          { title: 'Vehicle Type', content: data.features[0].properties.vehicle_information.vehicle_type },
+          { title: 'Power Voltage', content: data.features[0].properties.vehicle_information.power_voltage },
+          { title: 'Fuel Indicator', content: capitalize(data.features[0].properties.vehicle_information.fuel_indicator) },
+          { title: 'ODO Meter', content: data.features[0].properties.vehicle_information.ODO_meter },
         ]
-      }
+      };
+
       setInfogeneral(info)
 
 
-      // Reverse geocoding menggunakan Nominatim API
+      // Get complete address using reverse geocoding
       const reverseGeocode = async (lat, lon) => {
         const url = `${import.meta.env.VITE_NOMINATIM_API}?lat=${lat}&lon=${lon}&format=json`;
         const response = await fetch(url);
@@ -109,7 +74,6 @@ function App() {
         setAddress(`${address.road}, ${address.city_block}, ${address.suburb}, ${address.neighbourhood}, ${address.city}`)
       };
 
-      // Panggil reverse geocoding
       reverseGeocode(newLocation.lat, newLocation.lon);
     };
 
@@ -152,7 +116,7 @@ function App() {
             <div>
               <MapContainer center={location ? [location.lat, location.lon] : [-6.200000, 106.816666]} zoom={13} style={{ height: '500px', width: '100%', zIndex: 0 }}>
                 <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  url={`${import.meta.env.VITE_OPEN_MAPS}`}
                 />
                 {location && (
                   <Marker position={[location.lat, location.lon]} icon={carIcon}>
@@ -169,7 +133,6 @@ function App() {
           </div>
         </div>
       </div>
-
 
       {/* footer */}
     </React.Fragment>
